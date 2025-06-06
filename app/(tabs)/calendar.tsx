@@ -7,14 +7,13 @@ import { FontAwesome5 } from '@expo/vector-icons';
 import {
   collection,
   query,
-  where, onSnapshot
+  where,
+  onSnapshot
 } from 'firebase/firestore';
 import { firestoreDB } from '../../firebaseConfig';
 import { useAuth } from '../_layout';
-
-// Import types and the new utility function
-import { HabitLogEntry } from '../../types'; // Adjust path
-import { getTimestampForStartOfLocalDay, timestampToStartOfItsLocalDayDate } from '../../utils/habitUtils'; // Adjust path
+import { HabitLogEntry } from '../../types';
+import { getTimestampForStartOfLocalDay, timestampToStartOfItsLocalDayDate } from '../../utils/habitUtils';
 
 const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const monthNames = [
@@ -24,14 +23,12 @@ const monthNames = [
 
 export default function CalendarScreen() {
   const { user: authUser } = useAuth();
-  const [currentDisplayDate, setCurrentDisplayDate] = useState(new Date()); // For month/year navigation
-  // Stores data as: { "YYYY-MM-DD": { completedCount: X, totalLogged: Y } }
-  // The key "YYYY-MM-DD" will represent the *local date string*.
+  const [currentDisplayDate, setCurrentDisplayDate] = useState(new Date());
   const [loggedDataForMonth, setLoggedDataForMonth] = useState<Record<string, { completedCount: number, totalLogged: number }>>({});
   const [isLoadingLogs, setIsLoadingLogs] = useState(false);
 
   const year = currentDisplayDate.getFullYear();
-  const month = currentDisplayDate.getMonth(); // 0-indexed
+  const month = currentDisplayDate.getMonth();
 
   useEffect(() => {
     if (!authUser) {
@@ -42,35 +39,29 @@ export default function CalendarScreen() {
 
     setIsLoadingLogs(true);
 
-    // Determine the first and last day of the currently displayed month *in the user's local timezone*
-    // Then get Timestamps for the start of these local days.
     const firstDayOfMonthLocal = new Date(year, month, 1);
-    const lastDayOfMonthLocal = new Date(year, month + 1, 0); // Day 0 of next month is last day of current
+    const lastDayOfMonthLocal = new Date(year, month + 1, 0);
 
     const startOfMonthTimestamp = getTimestampForStartOfLocalDay(firstDayOfMonthLocal);
-    const endOfMonthTimestamp = getTimestampForStartOfLocalDay(lastDayOfMonthLocal); // Get start of this last day
+    const endOfMonthTimestamp = getTimestampForStartOfLocalDay(lastDayOfMonthLocal);
 
-    // Query habitLog for entries where the 'date' field (which stores start-of-local-day TS)
-    // falls within the start of the first local day of the month and the start of the last local day of the month.
     const logsQuery = query(
       collection(firestoreDB, "habitLog"),
       where("userId", "==", authUser.uid),
       where("date", ">=", startOfMonthTimestamp),
-      where("date", "<=", endOfMonthTimestamp) // Inclusive of the start of the last day
+      where("date", "<=", endOfMonthTimestamp)
     );
 
     const unsubscribe = onSnapshot(logsQuery, (snapshot) => {
       const monthlyLogs: Record<string, { completedCount: number, totalLogged: number }> = {};
       snapshot.forEach((doc) => {
         const log = doc.data() as HabitLogEntry;
-        // The `log.date` Timestamp already represents the start of a local day.
-        // We need to convert this Timestamp to a "YYYY-MM-DD" string key based on that local day.
-        const logLocalDate = timestampToStartOfItsLocalDayDate(log.date); // Get JS Date for start of its local day
+        const logLocalDate = timestampToStartOfItsLocalDayDate(log.date);
 
         const keyYear = logLocalDate.getFullYear();
-        const keyMonth = (logLocalDate.getMonth() + 1).toString().padStart(2, '0'); // 1-indexed, padded
-        const keyDay = logLocalDate.getDate().toString().padStart(2, '0'); // padded
-        const dateStringKey = `${keyYear}-${keyMonth}-${keyDay}`;
+        const keyMonth = (logLocalDate.getMonth() + 1).toString().padStart(2, '0');
+        const keyDay = logLocalDate.getDate().toString().padStart(2, '0');
+        const dateStringKey = `${keyDay}/${keyMonth}/${keyYear}`;
 
         if (!monthlyLogs[dateStringKey]) {
           monthlyLogs[dateStringKey] = { completedCount: 0, totalLogged: 0 };
@@ -90,14 +81,14 @@ export default function CalendarScreen() {
 
     return () => unsubscribe();
 
-  }, [authUser, year, month]); // Re-fetch when user or displayed month/year changes
+  }, [authUser, year, month]);
 
-  const firstDayOfMonthWeekday = new Date(year, month, 1).getDay(); // Local weekday
-  const daysInMonthVal = new Date(year, month + 1, 0).getDate(); // Days in current local month
+  const firstDayOfMonthWeekday = new Date(year, month, 1).getDay();
+  const daysInMonthVal = new Date(year, month + 1, 0).getDate();
   const todayObjForHighlight = useMemo(() => {
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  }, []); // Only re-calculate once per mount
+  }, []);
 
   const handlePrevMonth = () => {
     setCurrentDisplayDate(new Date(year, month - 1, 1));
@@ -114,20 +105,19 @@ export default function CalendarScreen() {
     }
 
     for (let dayCounter = 1; dayCounter <= daysInMonthVal; dayCounter++) {
-      // Key for loggedDataForMonth should match the local date of the cell
       const cellMonthPadded = (month + 1).toString().padStart(2, '0');
       const cellDayPadded = dayCounter.toString().padStart(2, '0');
-      const dateStringForLogKey = `${year}-${cellMonthPadded}-${cellDayPadded}`;
+      const dateStringForLogKey = `${cellDayPadded}/${cellMonthPadded}/${year}`;
       const dayLogData = loggedDataForMonth[dateStringForLogKey];
 
-      const cellDateObj = new Date(year, month, dayCounter); // Local date of the current cell
+      const cellDateObj = new Date(year, month, dayCounter);
       const isCurrentDisplayDayToday = cellDateObj.getTime() === todayObjForHighlight.getTime();
 
       let dayStyle = 'bg-light-100';
       let textStyle = 'text-text';
 
       if (isCurrentDisplayDayToday) {
-        dayStyle = 'bg-primary'; // Tailwind primary color
+        dayStyle = 'bg-primary';
         textStyle = 'text-white';
       } else if (dayLogData) {
         if (dayLogData.completedCount > 0 && dayLogData.completedCount === dayLogData.totalLogged) {
@@ -150,7 +140,8 @@ export default function CalendarScreen() {
             const logInfo = dayLogData
               ? `${dayLogData.completedCount} of ${dayLogData.totalLogged} habits completed.`
               : "No habits logged for this day.";
-            Alert.alert(`${monthNames[month]} ${dayCounter}, ${year}`, logInfo); // Show local date in alert
+            const alertDate = `${cellDayPadded}/${cellMonthPadded}/${year}`;
+            Alert.alert(alertDate, logInfo);
           }}
         >
           <Text className={`text-base font-sans-medium ${textStyle}`}>{dayCounter}</Text>

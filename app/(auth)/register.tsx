@@ -1,16 +1,17 @@
 // File: app/(auth)/register.tsx
 
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator, StyleSheet, ScrollView } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore'; // For creating user document
-import { auth, firestoreDB } from '../../firebaseConfig'; // Adjust path if needed
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { auth, firestoreDB } from '../../firebaseConfig';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function RegisterScreen() {
   const router = useRouter();
-  const [username, setUsername] = useState(''); // For displayName
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -28,35 +29,22 @@ export default function RegisterScreen() {
 
     setIsLoading(true);
     try {
-      // 1. Create user with Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
       const user = userCredential.user;
 
-      // 2. Update Firebase Auth profile with displayName (optional but good)
-      await updateProfile(user, {
-        displayName: username.trim(),
-        // photoURL: "some-default-avatar.png" // if you have one
-      });
+      await updateProfile(user, { displayName: username.trim() });
 
-      // 3. Create a user document in Firestore
-      // Use user.uid as the document ID in your 'users' collection
       const userDocRef = doc(firestoreDB, "users", user.uid);
       await setDoc(userDocRef, {
-        // uid: user.uid, // Not needed if doc ID is uid
         email: user.email,
         displayName: username.trim(),
         createdAt: serverTimestamp(),
-        onboardingCompleted: false, // Example field
-        appSettings: { // Default app settings
-          theme: "light", // or 'system'
-        }
-        // Add other initial fields for the user document if any
+        onboardingCompleted: false,
+        appSettings: { theme: "light" },
       });
 
       console.log('User registered and profile created:', user.uid);
       Alert.alert("Registration Successful", "Your account has been created!");
-      // Navigation will be handled by the root layout based on auth state
-      // router.replace('/(tabs)/home'); // Or let the root layout handle redirection
     } catch (error: any) {
       console.error("Registration Error:", error);
       let errorMessage = "Registration failed. Please try again.";
@@ -74,80 +62,108 @@ export default function RegisterScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-background p-6 justify-center">
-      {/* ... (Your existing UI for title, inputs for username, email, password, confirmPassword) ... */}
-      <View className="mb-8">
-        <Text className="text-4xl font-sans-bold text-primary text-center">
-          Create Account
-        </Text>
-        <Text className="text-lg text-text/70 text-center mt-2">
-          Start your habit tracking journey!
-        </Text>
-      </View>
+    <SafeAreaView style={styles.container}>
+      <LinearGradient
+        colors={['#1A237E', '#6A1B9A']}
+        style={StyleSheet.absoluteFill}
+      />
+      
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <View className="flex-1 w-full p-6 justify-center">
+          <View className="mb-8">
+            <Text className="text-4xl font-sans-bold text-white text-center">
+              Create Account
+            </Text>
+            <Text className="text-lg text-white/70 text-center mt-2">
+              Start your habit tracking journey!
+            </Text>
+          </View>
 
-      <View className="mb-4">
-        <Text className="text-sm font-sans-medium text-text/80 mb-1">Username</Text>
-        <TextInput
-          className="bg-light-100 border border-light-300 text-text text-base rounded-lg p-3 focus:border-primary"
-          placeholder="Choose a username"
-          value={username}
-          onChangeText={setUsername}
-          autoCapitalize="none"
-        />
-      </View>
-       <View className="mb-4">
-        <Text className="text-sm font-sans-medium text-text/80 mb-1">Email</Text>
-        <TextInput
-          className="bg-light-100 border border-light-300 text-text text-base rounded-lg p-3 focus:border-primary"
-          placeholder="you@example.com"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-      </View>
-      <View className="mb-4">
-        <Text className="text-sm font-sans-medium text-text/80 mb-1">Password</Text>
-        <TextInput
-          className="bg-light-100 border border-light-300 text-text text-base rounded-lg p-3 focus:border-primary"
-          placeholder="Create a password (min. 6 characters)"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-        />
-      </View>
-      <View className="mb-6">
-        <Text className="text-sm font-sans-medium text-text/80 mb-1">Confirm Password</Text>
-        <TextInput
-          className="bg-light-100 border border-light-300 text-text text-base rounded-lg p-3 focus:border-primary"
-          placeholder="Confirm your password"
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-          secureTextEntry
-        />
-      </View>
+          <View className="mb-4">
+            <Text className="text-sm font-sans-medium text-white/80 mb-1">Username</Text>
+            <TextInput
+              className="bg-white/10 border border-white/20 text-white text-base rounded-lg p-3 focus:border-primary"
+              placeholder="Choose a username"
+              placeholderTextColor="#9CA3AF"
+              value={username}
+              onChangeText={setUsername}
+              autoCapitalize="none"
+            />
+          </View>
 
-      <TouchableOpacity
-        className={`bg-primary py-4 rounded-lg ${isLoading ? 'opacity-50' : 'active:bg-indigo-700'}`}
-        onPress={handleRegister}
-        disabled={isLoading}
-      >
-        {isLoading ? (
-          <ActivityIndicator size="small" color="white" />
-        ) : (
-          <Text className="text-white text-center text-lg font-sans-semibold">
-            Sign Up
-          </Text>
-        )}
-      </TouchableOpacity>
-      <View className="flex-row justify-center mt-8">
-        <Text className="text-text/70">Already have an account? </Text>
-        <Link href="/(auth)/login" asChild>
-          <TouchableOpacity>
-            <Text className="text-primary font-sans-semibold">Login</Text>
+          <View className="mb-4">
+            <Text className="text-sm font-sans-medium text-white/80 mb-1">Email</Text>
+            <TextInput
+              className="bg-white/10 border border-white/20 text-white text-base rounded-lg p-3 focus:border-primary"
+              placeholder="you@example.com"
+              placeholderTextColor="#9CA3AF"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+          </View>
+
+          <View className="mb-4">
+            <Text className="text-sm font-sans-medium text-white/80 mb-1">Password</Text>
+            <TextInput
+              className="bg-white/10 border border-white/20 text-white text-base rounded-lg p-3 focus:border-primary"
+              placeholder="Create a password (min. 6 characters)"
+              placeholderTextColor="#9CA3AF"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+            />
+          </View>
+
+          <View className="mb-6">
+            <Text className="text-sm font-sans-medium text-white/80 mb-1">Confirm Password</Text>
+            <TextInput
+              className="bg-white/10 border border-white/20 text-white text-base rounded-lg p-3 focus:border-primary"
+              placeholder="Confirm your password"
+              placeholderTextColor="#9CA3AF"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              secureTextEntry
+            />
+          </View>
+
+          <TouchableOpacity
+            className={`bg-primary py-4 rounded-lg ${isLoading ? 'opacity-50' : 'active:bg-indigo-700'}`}
+            onPress={handleRegister}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <ActivityIndicator size="small" color="white" />
+            ) : (
+              <Text className="text-white text-center text-lg font-sans-semibold">
+                Sign Up
+              </Text>
+            )}
           </TouchableOpacity>
-        </Link>
-      </View>
+
+          <View className="flex-row justify-center mt-8">
+            <Text className="text-white/70">Already have an account? </Text>
+            <Link href="/(auth)/login" asChild>
+              <TouchableOpacity>
+                <Text className="text-primary font-sans-semibold">Login</Text>
+              </TouchableOpacity>
+            </Link>
+          </View>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
+  scrollContainer: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+});

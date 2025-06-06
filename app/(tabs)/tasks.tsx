@@ -93,7 +93,6 @@ export default function TasksScreen() {
       await addDoc(collection(firestoreDB, "tasks"), newTaskData);
       setInputText('');
       Keyboard.dismiss();
-      // No Alert needed here, onSnapshot will update the list
     } catch (error) {
       console.error("Error adding task: ", error);
       Alert.alert("Error", "Could not save task. Please try again.");
@@ -105,7 +104,7 @@ export default function TasksScreen() {
   const toggleTaskCompletion = async (task: Task) => {
     if (!authUser || !task.id) return;
 
-    // Optimistic update
+
     setTasks(prevTasks =>
         prevTasks.map(t =>
             t.id === task.id ? { ...t, completed: !t.completed } : t
@@ -113,17 +112,17 @@ export default function TasksScreen() {
     );
 
      try {
-      const taskDocRef = doc(firestoreDB, "tasks", task.id!); // Use !
+      const taskDocRef = doc(firestoreDB, "tasks", task.id!); 
       await updateDoc(taskDocRef, {
         completed: !task.completed,
       });
     } catch (error) {
       console.error("Error updating task completion: ", error);
       Alert.alert("Error", "Could not update task status.");
-      // Revert optimistic update on error
+  
        setTasks(prevTasks =>
         prevTasks.map(t =>
-            t.id === task.id ? { ...t, completed: task.completed } : t // Revert to original
+            t.id === task.id ? { ...t, completed: task.completed } : t 
         )
     );
     }
@@ -142,12 +141,11 @@ export default function TasksScreen() {
           style: "destructive",
           onPress: async () => {
             try {
-              const taskDocRef = doc(firestoreDB, "tasks", task.id!); // Use !
+              const taskDocRef = doc(firestoreDB, "tasks", task.id!); 
               await deleteDoc(taskDocRef);
             } catch (error) {
               console.error("Error deleting task: ", error);
               Alert.alert("Error", "Could not delete task.");
-              // If you did an optimistic update, you might need to add it back here
             }
           },
         },
@@ -166,7 +164,7 @@ export default function TasksScreen() {
       >
         <FontAwesome5
           name={item.completed ? 'check-square' : 'square'}
-          solid={item.completed} // Ensure 'check-square' is solid
+          solid={item.completed}
           size={24}
           color={item.completed ? '#10B981' : '#A0A0A0'}
         />
@@ -228,9 +226,9 @@ export default function TasksScreen() {
           <FlatList
             data={tasks}
             renderItem={renderTaskItem}
-            keyExtractor={(item) => item.id!} // item.id will be present when fetched
+            keyExtractor={(item) => item.id!}
             showsVerticalScrollIndicator={false}
-            extraData={tasks} // To help FlatList re-render on item changes
+            extraData={tasks}
           />
         ) : (
           <View className="flex-1 items-center justify-center mt-10">

@@ -3,30 +3,31 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, Image, Alert,
-  ActivityIndicator, ScrollView
+  ActivityIndicator, ScrollView, StyleSheet
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { FontAwesome5 } from '@expo/vector-icons';
-import { updateProfile } from 'firebase/auth';
+import { updateProfile, updatePassword } from 'firebase/auth'; 
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { firestoreDB, storage } from '../firebaseConfig'; // Ensure storage is exported
-import { useAuth } from './_layout'; // Path to root _layout
+import { firestoreDB, storage } from '../firebaseConfig';
+import { useAuth } from './_layout';
 import * as ImagePicker from 'expo-image-picker';
-import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage"; // deleteObject not strictly needed for overwrite
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 
-// Assuming UserProfile type is in types/index.ts and includes photoStoragePath
-// import { UserProfile } from '../../types'; // Adjust path if necessary
 
 export default function EditProfileScreen() {
   const router = useRouter();
   const { user: authUser } = useAuth();
 
+
   const [displayName, setDisplayName] = useState('');
-  const [currentPhotoURL, setCurrentPhotoURL] = useState<string | null>(null); // For current display
-  // const [currentStoragePath, setCurrentStoragePath] = useState<string | null>(null); // Less critical if always overwriting 'profile.jpg'
-  const [newImageUri, setNewImageUri] = useState<string | null>(null); // Local URI of newly picked image
+  const [currentPhotoURL, setCurrentPhotoURL] = useState<string | null>(null);
+  const [newImageUri, setNewImageUri] = useState<string | null>(null);
   const [email, setEmail] = useState('');
+
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -44,10 +45,9 @@ export default function EditProfileScreen() {
           const userDocRef = doc(firestoreDB, "users", authUser.uid);
           const userDocSnap = await getDoc(userDocRef);
           if (userDocSnap.exists()) {
-            const firestoreData = userDocSnap.data(); // as UserProfile
+            const firestoreData = userDocSnap.data();
             setDisplayName(firestoreData.displayName || authUser.displayName || '');
             setCurrentPhotoURL(firestoreData.photoURL || authUser.photoURL || null);
-            // setCurrentStoragePath(firestoreData.photoStoragePath || null); // Still good to have if you ever need the path
           }
         } catch (error) {
           console.error("Error fetching user data for edit:", error);
@@ -61,8 +61,8 @@ export default function EditProfileScreen() {
       Alert.alert("Error", "No authenticated user found.");
       if (router.canGoBack()) router.back(); else router.replace('/(auth)/login');
     }
-  }, [authUser, router]); // Added router to dependency array
-
+  }, [authUser, router]);
+  
   const handleChoosePhoto = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (permissionResult.granted === false) {
@@ -78,91 +78,89 @@ export default function EditProfileScreen() {
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
       setNewImageUri(result.assets[0].uri);
-      // setCurrentPhotoURL(result.assets[0].uri); // Optimistic display handled by Image source logic
     }
   };
 
   const uploadImageAsync = async (uri: string): Promise<{ downloadURL: string; storagePath: string } | null> => {
-    if (!authUser) return null;
-    setIsUploading(true);
-
-    const fileName = `profile.jpg`; // Consistent filename for overwriting
-    const newStoragePath = `profilePictures/${authUser.uid}/${fileName}`;
-    const imageRef = ref(storage, newStoragePath);
-
-    try {
-      const response = await fetch(uri);
-      const blob = await response.blob();
-
-      const uploadTask = uploadBytesResumable(imageRef, blob);
-
-      return new Promise((resolve, reject) => {
-        uploadTask.on('state_changed',
-          (snapshot) => {
-            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            console.log('Upload is ' + progress + '% done');
-          },
-          (error) => {
-            console.error("Upload failed:", error);
-            setIsUploading(false);
-            reject(error);
-          },
-          () => {
-            getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-              console.log('File available at', downloadURL);
-              setIsUploading(false);
-              resolve({ downloadURL, storagePath: newStoragePath });
-            }).catch((err) => {
-                console.error("Error getting download URL:", err);
-                setIsUploading(false);
-                reject(err);
-            });
-          }
-        );
-      });
-    } catch (e) {
-      console.error("Error in uploadImageAsync preparing upload:", e);
-      Alert.alert("Upload Error", "Could not prepare image for upload.");
-      setIsUploading(false);
-      return null;
-    }
+     if (!authUser) return null;
+     setIsUploading(true);
+     const fileName = `profile.jpg`; 
+     const newStoragePath = `profilePictures/${authUser.uid}/${fileName}`;
+     const imageRef = ref(storage, newStoragePath);
+     try {
+       const response = await fetch(uri);
+       const blob = await response.blob();
+       const uploadTask = uploadBytesResumable(imageRef, blob);
+       return new Promise((resolve, reject) => {
+         uploadTask.on('state_changed',
+           (snapshot) => console.log('Upload is ' + (snapshot.bytesTransferred / snapshot.totalBytes) * 100 + '% done'),
+           (error) => { setIsUploading(false); reject(error); },
+           () => {
+             getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+               setIsUploading(false);
+               resolve({ downloadURL, storagePath: newStoragePath });
+             }).catch((err) => { setIsUploading(false); reject(err); });
+           }
+         );
+       });
+     } catch (e) {
+       Alert.alert("Upload Error", "Could not prepare image for upload.");
+       setIsUploading(false);
+       return null;
+     }
   };
+
 
   const handleSaveChanges = async () => {
     if (!authUser) { Alert.alert("Error", "Authentication error."); return; }
     if (!displayName.trim()) { Alert.alert("Validation Error", "Display name cannot be empty."); return; }
+    
+    const isChangingPassword = newPassword.trim() !== '';
+
+    if (isChangingPassword) {
+      if (newPassword.length < 6) {
+        Alert.alert("Password Too Weak", "New password must be at least 6 characters long.");
+        return;
+      }
+      if (newPassword !== confirmNewPassword) {
+        Alert.alert("Passwords Do Not Match", "The new password and confirmation password do not match.");
+        return;
+      }
+
+      Alert.alert(
+        "Confirm Password Change",
+        "Are you sure you want to change your password? This action is irreversible.",
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Yes, Change It", style: 'destructive', onPress: () => proceedWithSave(true) }
+        ]
+      );
+    } else {
+      proceedWithSave(false);
+    }
+  };
+
+  const proceedWithSave = async (isChangingPassword: boolean) => {
+    if (!authUser) return;
 
     setIsSaving(true);
-    // Get the photoURL that Auth currently has. If new image picked, this will be replaced.
-    let finalPhotoURL = authUser.photoURL;
-    // The storage path will always be the consistent one if an image is set.
-    let finalStoragePath: string | null = `profilePictures/${authUser.uid}/profile.jpg`;
+    let finalPhotoURL = currentPhotoURL;
 
     try {
       if (newImageUri) {
         const uploadResult = await uploadImageAsync(newImageUri);
         if (uploadResult) {
           finalPhotoURL = uploadResult.downloadURL;
-          finalStoragePath = uploadResult.storagePath; // This will be the consistent path
         } else {
-          // If upload failed, we don't update photoURL or photoStoragePath
-          // User can try saving other changes or try image upload again.
           Alert.alert("Image Upload Failed", "Profile name changes will be saved, but the image could not be uploaded.");
-          finalPhotoURL = currentPhotoURL; // Revert to initially loaded or authUser's photoURL
-          // finalStoragePath will remain the consistent path, or null if no image before
-          const userDocForPath = doc(firestoreDB, "users", authUser.uid);
-          const userSnapForPath = await getDoc(userDocForPath);
-          finalStoragePath = userSnapForPath.data()?.photoStoragePath || null;
         }
-      } else if (!currentPhotoURL && authUser.photoURL) {
-        // This case is if the user had a photo, cleared it (not implemented), and we want to remove it.
-        // For now, if no new image, we keep the existing photoURL from authUser.
-        // If you implement a "remove photo" feature, you'd set finalPhotoURL and finalStoragePath to null here.
-        // And also call deleteObject for finalStoragePath.
       }
-      if(!finalPhotoURL) finalStoragePath = null; // If no photoURL, no storage path.
 
+      if (isChangingPassword) {
+        await updatePassword(authUser, newPassword);
 
+      }
+      
       await updateProfile(authUser, {
         displayName: displayName.trim(),
         photoURL: finalPhotoURL,
@@ -172,17 +170,26 @@ export default function EditProfileScreen() {
       await updateDoc(userDocRef, {
         displayName: displayName.trim(),
         photoURL: finalPhotoURL,
-        photoStoragePath: finalStoragePath,
       });
 
-      Alert.alert("Profile Updated", "Your profile has been successfully updated.");
+      const successMessage = isChangingPassword 
+        ? "Your profile and password have been updated." 
+        : "Your profile has been successfully updated.";
+      
+      Alert.alert("Success", successMessage, [
+        { text: "OK", onPress: () => router.back() }
+      ]);
+      
       setNewImageUri(null);
-      setCurrentPhotoURL(finalPhotoURL); // Update displayed photoURL
-      router.back();
-
+      setCurrentPhotoURL(finalPhotoURL);
+      
     } catch (error: any) {
       console.error("Error updating profile:", error);
-      Alert.alert("Update Error", error.message || "Could not update profile.");
+      let errorMessage = "Could not update profile.";
+      if (error.code === 'auth/requires-recent-login') {
+        errorMessage = "This is a sensitive action. Please log out and log back in before changing your password.";
+      }
+      Alert.alert("Update Error", errorMessage);
     } finally {
       setIsSaving(false);
       setIsUploading(false);
@@ -234,15 +241,44 @@ export default function EditProfileScreen() {
               editable={!isSaving && !isUploading}
             />
           </View>
-
           <View className="mb-8">
-            <Text className="text-sm font-sans-medium text-text/80 mb-1 ml-1">Email (cannot be changed here)</Text>
+            <Text className="text-sm font-sans-medium text-text/80 mb-1 ml-1">Email (cannot be changed)</Text>
             <TextInput
               className="bg-light-200 border border-light-300 text-text/70 text-base rounded-lg p-4"
               value={email}
               editable={false}
             />
           </View>
+
+          <View style={styles.dividerContainer}>
+            <View style={styles.divider} />
+            <Text style={styles.dividerText}>Change Password (Optional)</Text>
+            <View style={styles.divider} />
+          </View>
+
+          <View className="mb-5">
+            <Text className="text-sm font-sans-medium text-text/80 mb-1 ml-1">New Password</Text>
+            <TextInput
+              className="bg-light-100 border border-light-300 text-text text-base rounded-lg p-4 focus:border-primary"
+              placeholder="Enter new password (min. 6 characters)"
+              value={newPassword}
+              onChangeText={setNewPassword}
+              secureTextEntry
+              editable={!isSaving && !isUploading}
+            />
+          </View>
+          <View className="mb-8">
+            <Text className="text-sm font-sans-medium text-text/80 mb-1 ml-1">Confirm New Password</Text>
+            <TextInput
+              className="bg-light-100 border border-light-300 text-text text-base rounded-lg p-4 focus:border-primary"
+              placeholder="Confirm new password"
+              value={confirmNewPassword}
+              onChangeText={setConfirmNewPassword}
+              secureTextEntry
+              editable={!isSaving && !isUploading}
+            />
+          </View>
+
         </View>
       </ScrollView>
 
@@ -262,3 +298,23 @@ export default function EditProfileScreen() {
     </SafeAreaView>
   );
 }
+
+
+const styles = StyleSheet.create({
+    dividerContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginVertical: 20,
+    },
+    divider: {
+        flex: 1,
+        height: 1,
+        backgroundColor: '#E5E7EB',
+    },
+    dividerText: {
+        marginHorizontal: 10,
+        color: '#6B7280',
+        fontSize: 14,
+        fontWeight: '500',
+    },
+});

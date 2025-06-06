@@ -31,7 +31,7 @@ export default function HomeScreen() {
   const { user: authUser } = useAuth();
   const [habits, setHabits] = useState<DisplayHabit[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isDeleting, setIsDeleting] = useState<string | null>(null); // To show loading on specific item being deleted
+  const [isDeleting, setIsDeleting] = useState<string | null>(null); 
 
   const [currentLocalDayDate, setCurrentLocalDayDate] = useState(() => {
     const now = new Date();
@@ -55,8 +55,7 @@ export default function HomeScreen() {
       setIsLoading(false);
       return () => {};
     }
-    // setIsLoading(true); // isLoading is for the initial load
-    // ... (rest of the useEffect for fetching habits remains the same)
+
     const habitsQuery = query(
       collection(firestoreDB, "habits"),
       where("userId", "==", authUser.uid),
@@ -66,7 +65,7 @@ export default function HomeScreen() {
     const todayLogTimestamp = getTimestampForStartOfLocalDay(currentLocalDayDate);
 
     const unsubscribeHabits = onSnapshot(habitsQuery, async (querySnapshot) => {
-      setIsLoading(true); // Show loading while processing new snapshot
+      setIsLoading(true); 
       const fetchedHabits: Habit[] = [];
       querySnapshot.forEach((doc) => {
         fetchedHabits.push({ id: doc.id, ...doc.data() } as Habit);
@@ -114,9 +113,8 @@ export default function HomeScreen() {
     return () => unsubscribeHabits();
   }, [authUser, currentLocalDayDate]);
 
-  // toggleHabitCompletion function remains the same as previous version
+
   const toggleHabitCompletion = useCallback(async (habitToToggle: DisplayHabit) => {
-    // ... (existing toggleHabitCompletion logic) ...
      if (!authUser) { Alert.alert("Not Authenticated", "Please log in."); return; }
     if (!habitToToggle) { console.warn("toggleHabitCompletion called with undefined habitToToggle"); return; }
     if (!habitToToggle.isDueToday && !habitToToggle.isCompletedToday) { Alert.alert("Not Due", "This habit is not scheduled for completion today."); return; }
@@ -148,7 +146,7 @@ export default function HomeScreen() {
       } else {
         if (newLastCompletedDate && isSameUTCDay(newLastCompletedDate, todayTimestampForLog)) {
           newStreak = Math.max(0, (streak || 1) - 1);
-          newLastCompletedDate = newStreak === 0 ? null : null; // Simplified: TODO: find actual previous
+          newLastCompletedDate = newStreak === 0 ? null : null; 
         }
       }
 
@@ -180,15 +178,15 @@ export default function HomeScreen() {
           text: "Delete",
           style: "destructive",
           onPress: async () => {
-            setIsDeleting(habitId); // Show loading for this specific item
+            setIsDeleting(habitId); 
             try {
               const batch = writeBatch(firestoreDB);
 
-              // 1. Delete the habit document itself
+
               const habitDocRef = doc(firestoreDB, "habits", habitId);
               batch.delete(habitDocRef);
 
-              // 2. Query and delete all associated habitLog entries
+
               const logsQuery = query(
                 collection(firestoreDB, "habitLog"),
                 where("userId", "==", authUser.uid), // Ensure we only delete user's own logs
@@ -201,10 +199,7 @@ export default function HomeScreen() {
 
               await batch.commit();
               Alert.alert("Habit Deleted", `"${habitName}" and its history have been deleted.`);
-              // No need to manually remove from local `habits` state if using onSnapshot,
-              // as it will auto-update when the habit document is deleted.
-              // If not using onSnapshot for the main list, you'd filter it here:
-              // setHabits(prevHabits => prevHabits.filter(h => h.id !== habitId));
+
             } catch (error) {
               console.error("Error deleting habit:", error);
               Alert.alert("Deletion Error", "Could not delete habit. Please try again.");
@@ -219,7 +214,6 @@ export default function HomeScreen() {
 
   const renderHabitItem = ({ item }: { item: DisplayHabit }) => (
     <View className={`p-4 rounded-lg mb-3 flex-row items-center justify-between shadow ${!item.isDueToday && !item.isCompletedToday ? 'bg-light-200 opacity-70' : 'bg-light-100'}`}>
-      {/* Habit Info */}
       <View className="flex-1 mr-2">
         <Text className={`text-lg font-sans-medium ${!item.isDueToday && !item.isCompletedToday ? 'text-text/70' : 'text-text'}`}>{item.name}</Text>
         {item.streak > 0 ? (
@@ -235,9 +229,8 @@ export default function HomeScreen() {
         ) : null}
       </View>
 
-      {/* Actions Container */}
       <View className="flex-row items-center">
-        {/* Completion Toggle */}
+
         <TouchableOpacity
           onPress={() => toggleHabitCompletion(item)}
           disabled={(isDeleting === item.id) || (!item.isDueToday && !item.isCompletedToday)}
@@ -252,24 +245,23 @@ export default function HomeScreen() {
           )}
         </TouchableOpacity>
 
-        {/* Delete Button */}
         {isDeleting === item.id ? (
           <ActivityIndicator size="small" color="#EF4444" style={{padding: 10}} />
         ) : (
           <TouchableOpacity
             onPress={() => handleDeleteHabit(item.id, item.name)}
-            className="p-2" // Add some padding for easier tapping
-            disabled={isDeleting !== null && isDeleting !== item.id} // Disable other delete buttons while one is processing
+            className="p-2"
+            disabled={isDeleting !== null && isDeleting !== item.id} 
           >
-            <FontAwesome5 name="trash-alt" size={20} color="#EF4444" /> {/* Red color for delete */}
+            <FontAwesome5 name="trash-alt" size={20} color="#EF4444" /> 
           </TouchableOpacity>
         )}
       </View>
     </View>
   );
 
-  // ... (isLoading check, SafeAreaView, Header, FlatList/Empty State, FAB)
-  if (isLoading && habits.length === 0) { // Show full screen loader only on initial load
+
+  if (isLoading && habits.length === 0) { 
     return (
       <SafeAreaView className="flex-1 items-center justify-center bg-background">
         <ActivityIndicator size="large" color="#4F46E5" />
@@ -279,7 +271,6 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top']}>
-      {/* Header */}
       <View className="bg-primary px-5 py-4 flex-row items-center justify-between shadow-md">
         <TouchableOpacity onPress={() => router.push('/profile')} className="p-1">
           <FontAwesome5 name="user-cog" size={22} color="white" />
@@ -288,9 +279,9 @@ export default function HomeScreen() {
         <View style={{width: 28}} />
       </View>
 
-      {/* Main Content Area */}
+
       <View className="p-6 flex-1">
-        {/* Show a smaller loading indicator if habits are already displayed but refreshing */}
+
         {isLoading && habits.length > 0 && (
             <View className="absolute top-2 right-2 z-10 p-2 bg-light-100 rounded-full shadow">
                 <ActivityIndicator size="small" color="#4F46E5" />
@@ -302,10 +293,10 @@ export default function HomeScreen() {
             renderItem={renderHabitItem}
             keyExtractor={(item) => item.id}
             showsVerticalScrollIndicator={false}
-            extraData={{habits, isDeleting}} // Add isDeleting to extraData
+            extraData={{habits, isDeleting}} 
           />
         ) : (
-           !isLoading && ( // Only show "No active habits" if not loading
+           !isLoading && ( 
             <View className="flex-1 items-center justify-center">
                 <FontAwesome5 name="calendar-check" size={60} color="#D1D5DB" />
                 <Text className="text-xl text-text/60 mt-4 font-sans-medium">No active habits!</Text>
@@ -317,7 +308,6 @@ export default function HomeScreen() {
         )}
       </View>
 
-      {/* Floating Action Button */}
        <TouchableOpacity
         className="absolute bottom-8 right-6 bg-primary w-16 h-16 rounded-full items-center justify-center shadow-lg"
         onPress={() => router.push('/(tabs)/habit')}

@@ -6,13 +6,13 @@ import * as SplashScreen from 'expo-splash-screen';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native'; // For loading state
-import { auth } from '../firebaseConfig'; // Adjust path if your firebaseConfig.ts is elsewhere
-import './globals.css'; // Your global styles
+import { auth } from '../firebaseConfig';
+import './globals.css';
 
-// Prevent the splash screen from auto-hiding
+
 SplashScreen.preventAutoHideAsync();
 
-// Create a Context to expose the auth state
+
 type AuthContextType = {
   user: User | null;
   isLoading: boolean;
@@ -23,12 +23,12 @@ const AuthContext = createContext<AuthContextType>({
   isLoading: true,
 });
 
-// Custom hook to use the AuthContext
+
 export const useAuth = () => {
   return useContext(AuthContext);
 };
 
-// AuthProvider component to wrap the app
+
 function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
@@ -38,7 +38,7 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(currentUser);
       setIsAuthLoading(false);
     });
-    return () => unsubscribe(); // Cleanup subscription on unmount
+    return () => unsubscribe();
   }, []);
 
   return (
@@ -48,7 +48,7 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-// Main Root Layout Component
+
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
     'Inter-Regular': require('../assets/fonts/Inter-Regular.ttf'),
@@ -59,7 +59,6 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (fontsLoaded || fontError) {
-      // Splash screen will be hidden in RootLayoutNav
     }
   }, [fontsLoaded, fontError]);
 
@@ -74,7 +73,6 @@ export default function RootLayout() {
   );
 }
 
-// Navigation logic component
 function RootLayoutNav() {
   const { user, isLoading: isAuthLoading } = useAuth();
   const router = useRouter();
@@ -118,6 +116,7 @@ function RootLayoutNav() {
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="profile" options={{ headerShown: false }} />
       <Stack.Screen name="editProfile" options={{ headerShown: false }} />
+      <Stack.Screen name="infoPage" options={{ presentation: 'modal', headerShown: false }} />
     </Stack>
   );
 }
