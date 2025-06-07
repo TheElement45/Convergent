@@ -132,7 +132,7 @@ export default function ProfileScreen() {
       icon: "paper-plane",
       iconColor: "#3B82F6",
       text: "Send Feedback",
-      onPress: () => openLink("mailto:foreelement45@gmail.com?subject=Convergent App Feedback"),
+      onPress: () =>  Linking.openURL("mailto:foreelement45@gmail.com?subject=Convergent App Feedback"),
     },
   ];
 
