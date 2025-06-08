@@ -28,19 +28,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { firestoreDB } from '../../firebaseConfig';
 import { useAuth } from '../_layout';
 
-// Assuming Task type is defined in types/index.ts or here
-// If defined here:
-// export type Task = { /* ... as defined above ... */ };
-import { Task } from '../../types'; // Adjust path if necessary
+import { Task } from '../../types';
 
 export default function TasksScreen() {
   const { user: authUser } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [inputText, setInputText] = useState('');
-  const [isLoading, setIsLoading] = useState(true); // For initial load
-  const [isSubmitting, setIsSubmitting] = useState(false); // For add task action
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Fetch tasks from Firestore
   useEffect(() => {
     if (!authUser) {
       setTasks([]);
@@ -52,7 +48,7 @@ export default function TasksScreen() {
     const tasksQuery = query(
       collection(firestoreDB, "tasks"),
       where("userId", "==", authUser.uid),
-      orderBy("createdAt", "desc") // Show newer tasks first, or "asc" for older first
+      orderBy("createdAt", "desc")
     );
 
     const unsubscribe = onSnapshot(tasksQuery, (querySnapshot) => {
@@ -68,7 +64,7 @@ export default function TasksScreen() {
       setIsLoading(false);
     });
 
-    return () => unsubscribe(); // Cleanup listener on unmount
+    return () => unsubscribe();
   }, [authUser]);
 
   const handleAddTask = async () => {
@@ -237,7 +233,7 @@ export default function TasksScreen() {
               No tasks yet!
             </Text>
             <Text className="text-text/50 text-center mt-2">
-              Add a task using the input field above.
+              Add a one-off task using the input field above.
             </Text>
           </View>
         )}

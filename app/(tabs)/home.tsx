@@ -189,7 +189,7 @@ export default function HomeScreen() {
 
               const logsQuery = query(
                 collection(firestoreDB, "habitLog"),
-                where("userId", "==", authUser.uid), // Ensure we only delete user's own logs
+                where("userId", "==", authUser.uid),
                 where("habitId", "==", habitId)
               );
               const logDocsSnapshot = await getDocs(logsQuery);

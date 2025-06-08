@@ -5,7 +5,7 @@ import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from 'expo-splash-screen';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { ActivityIndicator, View } from 'react-native'; // For loading state
+import { ActivityIndicator, View } from 'react-native';
 import { auth } from '../firebaseConfig';
 import './globals.css';
 

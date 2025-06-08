@@ -53,21 +53,12 @@ export default function ProfileScreen() {
   const [isLoading, setIsLoading] = useState(true);
 
 
-  const aboutContent = "Convergent is a modern habit tracking application designed to help you align your daily actions with your long-term goals.\n\nBuild streaks, monitor your progress, and stay motivated on your journey to self-improvement.\n\nVersion: 1.0.8\nDeveloped by: Element45";
+  const aboutContent = "Convergent is a modern habit tracking application designed to help you align your daily actions with your long-term goals.\n\nBuild streaks, monitor your progress, and stay motivated on your journey to self-improvement.\n\nVersion: 1.1.0\nDeveloped by: Element45";
   
   const termsContent = "Effective Date: 5/7/2025\n\nWelcome to Convergent! By using our app, you agree to these terms.\n\n1. Use of Service: You agree to use Convergent for lawful purposes only. You are responsible for any data you create or store within the app.\n\n2. Age Requirement: You must be at least 13 years old to use this app.\n\n3. Account Security: You are responsible for safeguarding your account information. Notify us immediately of any unauthorized use.\n\n4. Disclaimers: The app is provided 'as-is' without any warranties. We do not guarantee that the service will be error-free or uninterrupted.\n\n5. Termination: We reserve the right to suspend or terminate your account at our discretion, especially in cases of misuse.\n\n6. Changes to Terms: We may update these terms from time to time. Continued use of the app after changes constitutes acceptance.";
 
   const privacyContent = "Effective Date: 5/7/2025\n\nYour privacy is important to us. This policy explains how we handle your data.\n\n1. Information We Collect: We collect information you provide directly, such as your email address, display name, and profile picture when you register. We also store the habit data you create.\n\n2. How We Use Information: Your data is used to provide, maintain, and improve the app's functionality. Your email is used for authentication and important communications. We do not use your personal habit data for marketing.\n\n3. Data Storage: Your data is stored securely using Firebase services. We take reasonable measures to protect your information from loss, theft, and unauthorized access.\n\n4. Data Sharing: We do not sell, trade, or otherwise transfer your personally identifiable information to outside parties.\n\n5. Your Control: You can edit your profile information and delete your account through the app's settings. Deleting your account will remove your personal data from our systems.\n\n6. Contact Us: If you have any questions about this Privacy Policy, please contact us at foreelement45@gmail.com.";
 
-  const openLink = async (url: string) => {
-
-    const supported = await Linking.canOpenURL(url);
-    if (supported) {
-      await Linking.openURL(url);
-    } else {
-      Alert.alert("Error", `Don't know how to open this URL: ${url}`);
-    }
-  };
   
   useEffect(() => {
 

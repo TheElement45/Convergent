@@ -8,8 +8,8 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
-  Modal, // Added for dropdown
-  StyleSheet, // For modal styling
+  Modal,
+  StyleSheet,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -19,20 +19,18 @@ import { firestoreDB } from '../../firebaseConfig';
 import { useAuth } from '../_layout';
 
 
-let numofDays = 0; // Default value for "Every X Days" frequency, can be adjusted later
+let numofDays = 0;
 
 export type HabitFrequencyConfig =
   | { type: "daily" }
   | { type: "every_x_days"; days: number }
-  | { type: "weekly" }; // Implies once a week, any day, or could be expanded later
+  | { type: "weekly" };
 
 const frequencyOptions: { label: string; value: HabitFrequencyConfig }[] = [
   { label: "Daily", value: { type: "daily" } },
   { label: "Every X Days", value: { type: "every_x_days", days: numofDays } },
   { label: "Weekly", value: { type: "weekly" } },
-  // Add more options like "Specific days of week" or "Monthly" here in the future
 ];
-// --- End Frequency ---
 
 type NewHabitData = {
   userId: string;
@@ -40,7 +38,7 @@ type NewHabitData = {
   createdAt: any;
   isActive: boolean;
   streak: number;
-  frequency: HabitFrequencyConfig; // Updated type
+  frequency: HabitFrequencyConfig;
   archived: boolean;
   lastCompletedDate: Timestamp | null;
 };
@@ -77,7 +75,7 @@ export default function AddHabitScreen() {
         createdAt: serverTimestamp(),
         isActive: true,
         streak: 0,
-        frequency: selectedFrequency, // Use selected frequency
+        frequency: selectedFrequency,
         archived: false,
         lastCompletedDate: null,
       };
@@ -87,7 +85,7 @@ export default function AddHabitScreen() {
 
       Alert.alert("Habit Saved", `"${habitName.trim()}" has been added to your list!`);
       setHabitName('');
-      setSelectedFrequency(frequencyOptions[0].value); // Reset frequency
+      setSelectedFrequency(frequencyOptions[0].value);
       setSelectedFrequencyLabel(frequencyOptions[0].label);
       router.push('/(tabs)/home');
 
@@ -108,7 +106,6 @@ export default function AddHabitScreen() {
   return (
     <SafeAreaView className="flex-1 bg-background">
       <View className="p-6 flex-1">
-        {/* Header */}
         <View className="flex-row items-center mb-8">
           <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.push('/(tabs)/home')} className="p-2 mr-2">
             <FontAwesome5 name="arrow-left" size={20} color="#4F46E5" />
@@ -118,7 +115,6 @@ export default function AddHabitScreen() {
           </Text>
         </View>
 
-        {/* Habit Name Input */}
         <View className="mb-5">
           <Text className="text-sm font-sans-medium text-text/80 mb-1 ml-1">
             Habit Name
@@ -133,7 +129,6 @@ export default function AddHabitScreen() {
           />
         </View>
 
-        {/* Frequency Selector */}
         <View className="mb-5">
           <Text className="text-sm font-sans-medium text-text/80 mb-1 ml-1">
             Frequency
@@ -161,7 +156,6 @@ export default function AddHabitScreen() {
             onChangeText={(text) => {
               const num = parseInt(text, 10);
               numofDays = isNaN(num) ? 1 : num;
-              // If "Every X Days" is selected, update the frequency config as well
               if (selectedFrequency.type === "every_x_days") {
                 setSelectedFrequency({ type: "every_x_days", days: numofDays });
               }
@@ -171,11 +165,8 @@ export default function AddHabitScreen() {
           />
         </View>
         )}
-
-        {/* TODO: Add UI for color, icon, reminders if needed */}
       </View>
 
-      {/* Action Buttons */}
       <View className="px-6 pb-6 border-t border-light-200 pt-4">
         <TouchableOpacity
           className={`py-4 rounded-lg ${isLoading ? 'bg-primary/50' : 'bg-primary active:bg-indigo-700'}`}
@@ -201,7 +192,6 @@ export default function AddHabitScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Frequency Selection Modal */}
       <Modal
         transparent={true}
         visible={isFrequencyModalVisible}
@@ -211,7 +201,7 @@ export default function AddHabitScreen() {
         <TouchableOpacity
             style={styles.modalOverlay}
             activeOpacity={1}
-            onPressOut={() => setIsFrequencyModalVisible(false)} // Close on tap outside
+            onPressOut={() => setIsFrequencyModalVisible(false)}
         >
             <View style={styles.modalContent} className="bg-white rounded-lg shadow-xl w-4/5 max-w-sm">
                  <Text className="text-lg font-sans-semibold text-primary p-4 border-b border-light-200">
@@ -244,11 +234,8 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent background
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
-    // Tailwind classes used directly for styling this view
-    // bg-white rounded-lg shadow-xl w-4/5 max-w-sm
-    // You can add specific non-Tailwind styles here if needed
   },
 });
