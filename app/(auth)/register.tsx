@@ -39,8 +39,6 @@ export default function RegisterScreen() {
         email: user.email,
         displayName: username.trim(),
         createdAt: serverTimestamp(),
-        onboardingCompleted: false,
-        appSettings: { theme: "light" },
       });
 
       console.log('User registered and profile created:', user.uid);
