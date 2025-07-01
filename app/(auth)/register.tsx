@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator, StyleSheet, ScrollView } from 'react-native';
-import { Link, useRouter } from 'expo-router';
+import { Link } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
@@ -10,7 +10,6 @@ import { auth, firestoreDB } from '../../firebaseConfig';
 import { LinearGradient } from 'expo-linear-gradient';
 
 export default function RegisterScreen() {
-  const router = useRouter();
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

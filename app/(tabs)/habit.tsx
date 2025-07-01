@@ -195,7 +195,7 @@ export default function AddHabitScreen() {
       <Modal
         transparent={true}
         visible={isFrequencyModalVisible}
-        animationType="fade" // 'slide' or 'fade'
+        animationType="fade"
         onRequestClose={() => setIsFrequencyModalVisible(false)}
       >
         <TouchableOpacity

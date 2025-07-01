@@ -2,14 +2,13 @@
 
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator, StyleSheet } from 'react-native';
-import { Link, useRouter } from 'expo-router';
+import { Link } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../../firebaseConfig';
 import { LinearGradient } from 'expo-linear-gradient';
 
 export default function LoginScreen() {
-  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);

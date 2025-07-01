@@ -103,7 +103,7 @@ export default function EditProfileScreen() {
            }
          );
        });
-     } catch (e) {
+     } catch {
        Alert.alert("Upload Error", "Could not prepare image for upload.");
        setIsUploading(false);
        return null;

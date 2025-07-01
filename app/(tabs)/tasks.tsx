@@ -3,7 +3,7 @@
 import { FontAwesome5 } from '@expo/vector-icons';
 import {
   addDoc,
-  collection,
+  collection, 
   deleteDoc,
   doc,
   onSnapshot,

@@ -2,19 +2,17 @@
 
 import { Timestamp } from 'firebase/firestore';
 
-// --- Re-export or define types if they are not in a global types file yet ---
-// It's best to have these in a shared types file (e.g., types/index.ts) and import here.
-// For now, I'll redefine them for clarity if they are not globally accessible.
+
 export type HabitFrequencyConfig =
   | { type: "daily" }
   | { type: "every_x_days"; days: number }
   | { type: "weekly" };
 
-export type HabitCoreInfo = { // Only the info needed for due date calculation
+export type HabitCoreInfo = {
   frequency: HabitFrequencyConfig;
   lastCompletedDate?: Timestamp | null;
 };
-// ---
+
 
 export const getMidnightUTCDate = (date: Date): Date => {
   const d = new Date(date);
@@ -48,8 +46,8 @@ export const getStartOfUTCCurrentWeek = (date: Date): Date => {
 };
 
 export const isHabitDueToday = (
-  habit: HabitCoreInfo, // Use the minimal type
-  today: Date // Pass today's UTC midnight date
+  habit: HabitCoreInfo,
+  today: Date
 ): boolean => {
   const { frequency, lastCompletedDate } = habit;
   const lastCompleted = lastCompletedDate ? lastCompletedDate.toDate() : null;
@@ -60,7 +58,6 @@ export const isHabitDueToday = (
 
     case "every_x_days":
       if (!lastCompleted) return true;
-      // Ensure lastCompleted is treated as UTC midnight for comparison
       const lastCompletedMidnight = getMidnightUTCDate(lastCompleted);
       const dueDate = addUTCDays(lastCompletedMidnight, frequency.days);
       return today.getTime() >= dueDate.getTime();
@@ -71,7 +68,8 @@ export const isHabitDueToday = (
       return lastCompleted.getTime() < startOfThisWeek.getTime();
 
     default:
-      // Should not happen with TypeScript, but good for safety / exhaustiveness
+      // Exhaustive check for frequency type
+      //should never happen if all cases are handled above maybe XD
       const _exhaustiveCheck: never = frequency;
       console.warn("Unhandled frequency type:", _exhaustiveCheck);
       return false;
